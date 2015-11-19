@@ -27,7 +27,7 @@ require('getmac').getMac(function(err, macAddress) {
 });
 
 /* set this to true to get some incomprehensible Klingon text in your console */
-var debug = false;
+var debug = true;
 if (debug) console.log("booting up node-red-contrib-openzwave");
 
 module.exports = function(RED) {
