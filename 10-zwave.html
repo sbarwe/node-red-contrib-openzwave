@@ -30,6 +30,12 @@
         <label for="node-config-input-pollinterval"><i class="icon-bookmark"></i> Poll interval</label>
         <input type="text" id="node-config-input-pollinterval">
     </div>
+    <div class="form-row">
+        <input id="node-config-add-node" type="button" value="Add node" style="margin-right: 15px;"/>
+        <input id="node-config-remove-node" type="button" value="Remove node" style="margin-right: 15px;"/>
+        <input id="node-config-remove-dead-nodes" type="button" value="Remove dead nodes" style="margin-right: 15px;"/>
+        <input id="node-config-cancel-add-remove" type="button" value="Cancel Add/Remove node"/>
+    </div>
 </script>
 
 
@@ -55,7 +61,7 @@
         <input type="text" id="node-input-controller">
     </div>
 </script>
- 
+
 <!-- ==============================================================================================   -->
 
 <script type="text/x-red" data-help-name="zwave-in">
@@ -88,7 +94,111 @@
         },
 		label: function() {
 			return("openzwave@"+this.port);
-		}
+		},
+        oneditprepare: function () {
+
+            var node = this;
+            $('#node-config-add-node').click(function () {
+                $.ajax({
+                    url: "openzwave/" + node.id + "/add",
+                    type: "POST",
+                    success: function (resp) {
+                        RED.notify(node._("openzwave.success", {label: valueField.val()}), "success");
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status == 404) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
+                        } else if (jqXHR.status == 500) {
+                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
+                        } else if (jqXHR.status == 0) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
+                        } else {
+                            RED.notify(node._("common.notification.error", {
+                                message: node._("common.notification.errors.unexpected", {
+                                    status: jqXHR.status,
+                                    message: textStatus
+                                })
+                            }), "error");
+                        }
+                    }
+                });
+            });
+            $('#node-config-remove-node').click(function () {
+                $.ajax({
+                    url: "openzwave/" + node.id + "/remove",
+                    type: "POST",
+                    success: function (resp) {
+                        RED.notify(node._("openzwave.success", {label: 'remove'}), "success");
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status == 404) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
+                        } else if (jqXHR.status == 500) {
+                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
+                        } else if (jqXHR.status == 0) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
+                        } else {
+                            RED.notify(node._("common.notification.error", {
+                                message: node._("common.notification.errors.unexpected", {
+                                    status: jqXHR.status,
+                                    message: textStatus
+                                })
+                            }), "error");
+                        }
+                    }
+                });
+            });
+            $('#node-config-remove-dead-nodes').click(function () {
+                $.ajax({
+                    url: "openzwave/" + node.id + "/remove_dead",
+                    type: "POST",
+                    success: function (resp) {
+                        RED.notify(node._("openzwave.success", {label: 'remove_dead'}), "success");
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status == 404) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
+                        } else if (jqXHR.status == 500) {
+                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
+                        } else if (jqXHR.status == 0) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
+                        } else {
+                            RED.notify(node._("common.notification.error", {
+                                message: node._("common.notification.errors.unexpected", {
+                                    status: jqXHR.status,
+                                    message: textStatus
+                                })
+                            }), "error");
+                        }
+                    }
+                });
+            });
+            $('#node-config-cancel-add-remove').click(function () {
+                $.ajax({
+                    url: "openzwave/" + node.id + "/cancel",
+                    type: "POST",
+                    success: function (resp) {
+                        RED.notify(node._("openzwave.success", {label: 'cancel'}), "success");
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status == 404) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
+                        } else if (jqXHR.status == 500) {
+                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
+                        } else if (jqXHR.status == 0) {
+                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
+                        } else {
+                            RED.notify(node._("common.notification.error", {
+                                message: node._("common.notification.errors.unexpected", {
+                                    status: jqXHR.status,
+                                    message: textStatus
+                                })
+                            }), "error");
+                        }
+                    }
+                });
+            });
+        }
     });
     RED.nodes.registerType('zwave-in',{
         category:'input',

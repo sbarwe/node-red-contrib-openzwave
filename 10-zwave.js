@@ -437,4 +437,39 @@ module.exports = function(RED) {
 	//
 	RED.nodes.registerType("zwave-out", ZWaveOut);
 	//
+	RED.httpAdmin.post("/openzwave/:id/:command", RED.auth.needsPermission("openzwave.write"), function (req, res) {
+		var node = RED.nodes.getNode(req.params.id);
+		try {
+			var command = req.params.command ? req.params.command.toString() : null;
+			switch(command) {
+				case 'add':
+					console.log('------------------ AddDevice');
+					ozwDriver.beginControllerCommand('AddDevice', true);
+					res.send(200);
+					break;
+				case 'remove':
+				case 'delete':
+					console.log('------------------ RemoveDevice');
+					ozwDriver.beginControllerCommand('RemoveDevice', true);
+					res.send(200);
+					break;
+				case 'remove_dead':
+				case 'delete_failed':
+					console.log('------------------ RemoveFailedNode');
+					ozwDriver.beginControllerCommand('RemoveFailedNode', true);
+					res.send(200);
+					break;
+				case 'cancel':
+					console.log('------------------ cancelControllerCommand');
+					ozwDriver.cancelControllerCommand(true);
+					res.send(200);
+					break;
+				default:
+					res.send(404);
+			}
+		} catch (err) {
+			res.send(500);
+			node.error(RED._("irtemplate.failed", {error: err.toString()}));
+		}
+	});
 }
