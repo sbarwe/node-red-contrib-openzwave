@@ -31,10 +31,21 @@
         <input type="text" id="node-config-input-pollinterval">
     </div>
     <div class="form-row">
-        <input id="node-config-add-node" type="button" value="Add node" style="margin-right: 15px;"/>
-        <input id="node-config-remove-node" type="button" value="Remove node" style="margin-right: 15px;"/>
-        <input id="node-config-remove-dead-nodes" type="button" value="Remove dead nodes" style="margin-right: 15px;"/>
-        <input id="node-config-cancel-add-remove" type="button" value="Cancel Add/Remove node"/>
+        <label for="homeid"><i class="icon-bookmark"></i> HomeID</label>
+        <input type="text" id="homeid" disabled="true" size="16">
+    </div>
+    <div class="form-row">
+        <input id="node-config-add-node" type="button" value="Add node" style="margin-right: 5px; width: 100px;"/>
+        <input id="node-config-remove-node" type="button" value="Remove node" style="margin-right: 5px; width: 120px;"/>
+        <input id="node-config-remove-dead-nodes" type="button" value="Remove dead nodes" style="margin-right: 5px; width: 170px;"/>
+        <input id="node-config-cancel-add-remove" type="button" value="Cancel Add/Remove node" style="width: 200px;"/>
+        <input id="node-config-soft-reset" type="button" value="SoftReset" style="width: 200px;"/>
+    </div>
+    <div class="form-row node-config-container-row" style="margin-bottom: 0px;">
+        <input id="node-config-refresh-nodes" type="button" value="Refresh" style="width: 100px;"/><br/>
+        <div id="node-config-container-div" style="box-sizing: border-box; border-radius: 5px; height: 310px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
+            <ol id="node-config-container" style=" list-style-type:none; margin: 0;"></ol>
+        </div>
     </div>
 </script>
 
@@ -48,7 +59,6 @@
         <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
         <input type="text" id="node-input-controller">
     </div>
-
 </script>
 
 <script type="text/x-red" data-template-name="zwave-out">
@@ -72,14 +82,24 @@
 <script type="text/x-red" data-help-name="zwave-out">
     <p><b>Output node for ZWave commands.</b><br/>
 	Use this to control individual ZWave devices. See OpenZWave documentation on ValueIDs.<br/>
-	<b>msg.topic</b> can be: <b>setLevel, setValue, switchOn, switchOff</b><br/>
+	<b>msg.topic</b> can be: <b>setLevel, setValue, switchOn, switchOff, setConfigParam, requestConfigParam</b><br/>
 	<b>msg.payload</b> has these sub-elements:<br/>
 		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
 		<br/>&nbsp;&nbsp;<b>msg.payload.cmdclass</b>(default:37) OZW command class in decimal (eg. 37 for switches, 38 for dimmers)
 		<br/>&nbsp;&nbsp;<b>msg.payload.cmdidx</b>(default: 0) command index (0 for most command classes, see OZW/Value.cpp)
 		<br/>&nbsp;&nbsp;<b>msg.payload.instance</b>(default: 1) for multi-instance devices (like FGS-211)
 		<br/>&nbsp;&nbsp;<b>msg.payload.value</b>(default: 0) value to set (eg. 0/1 for switches, 100 to set dimmers to 100% etc)
+    <br/>
+	<b>msg.payload</b> has these sub-elements for setConfigParam action:<br/>
+		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
+		<br/>&nbsp;&nbsp;<b>msg.payload.paramId: (REQUIRED for all topics)</b> configuration parameter number (decimal index)
+		<br/>&nbsp;&nbsp;<b>msg.payload.paramValue (or msg.payload.value)</b>(default: 0) value to set (eg. 0/1 for switches, 100 to set dimmers to 100% etc)
+    <br/>
+	<b>msg.payload</b> has these sub-elements for requestConfigParam action:<br/>
+		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
+		<br/>&nbsp;&nbsp;<b>msg.payload.paramId: (REQUIRED for all topics)</b> configuration parameter number (decimal index)
 </p>
+
 </script>
 
 <script type="text/javascript">
@@ -87,23 +107,34 @@
         category: 'config',
 
         defaults: {
-			name:       {value:""},
-            port: {value: "/dev/ttyUSB0", required:true},
-            driverattempts: {value: 3,	required:true, validate:RED.validators.number()},
-            pollinterval:   {value: 500, required:true, validate:RED.validators.number()},
+            name: {value: ""},
+            port: {value: "/dev/ttyUSB0", required: true},
+            driverattempts: {value: 3, required: true, validate: RED.validators.number()},
+            pollinterval: {value: 500, required: true, validate: RED.validators.number()},
         },
-		label: function() {
-			return("openzwave@"+this.port);
-		},
+        label: function () {
+            return ("openzwave@" + this.port);
+        },
         oneditprepare: function () {
 
             var node = this;
-            $('#node-config-add-node').click(function () {
+            var index = 0;
+
+            function getNodes() {
+                $('#node-config-refresh-nodes').val('Loading...');
+                $('#node-config-refresh-nodes').prop("disabled", true);
                 $.ajax({
-                    url: "openzwave/" + node.id + "/add",
+                    url: "openzwave/" + node.id + "/list_nodes",
                     type: "POST",
                     success: function (resp) {
-                        RED.notify(node._("openzwave.success", {label: valueField.val()}), "success");
+                        clearZNodeList();
+                        console.log(resp);
+                        for (var znodeid in resp) {
+                            fillZNodeList(znodeid, resp[znodeid]);
+                        }
+                        RED.notify(node._("openzwave.success", {label: 'list_nodes'}), "success");
+                        $('#node-config-refresh-nodes').val('Refresh');
+                        $('#node-config-refresh-nodes').prop("disabled", false);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         if (jqXHR.status == 404) {
@@ -122,13 +153,16 @@
                         }
                     }
                 });
-            });
-            $('#node-config-remove-node').click(function () {
+            }
+
+            function getHomeID() {
+                $('#homeid').val('Loading...');
                 $.ajax({
-                    url: "openzwave/" + node.id + "/remove",
+                    url: "openzwave/" + node.id + "/get_homeid",
                     type: "POST",
                     success: function (resp) {
-                        RED.notify(node._("openzwave.success", {label: 'remove'}), "success");
+                        $('#homeid').val(resp.name + ' (' + resp.homeid + ')');
+                        RED.notify(node._("openzwave.success", {label: 'get_homeid'}), "success");
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         if (jqXHR.status == 404) {
@@ -147,81 +181,134 @@
                         }
                     }
                 });
-            });
-            $('#node-config-remove-dead-nodes').click(function () {
-                $.ajax({
-                    url: "openzwave/" + node.id + "/remove_dead",
-                    type: "POST",
-                    success: function (resp) {
-                        RED.notify(node._("openzwave.success", {label: 'remove_dead'}), "success");
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        if (jqXHR.status == 404) {
-                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
-                        } else if (jqXHR.status == 500) {
-                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
-                        } else if (jqXHR.status == 0) {
-                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
-                        } else {
-                            RED.notify(node._("common.notification.error", {
-                                message: node._("common.notification.errors.unexpected", {
-                                    status: jqXHR.status,
-                                    message: textStatus
-                                })
-                            }), "error");
+            }
+
+            function bindSend(id, cmd) {
+                $('#' + id).click(function () {
+                    $.ajax({
+                        url: "openzwave/" + node.id + "/" + cmd,
+                        type: "POST",
+                        success: function (resp) {
+                            RED.notify(node._("openzwave.success", {label: cmd}), "success");
+                            getNodes();
+                            setTimeout(getNodes, 10000);
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status == 404) {
+                                RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
+                            } else if (jqXHR.status == 500) {
+                                RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
+                            } else if (jqXHR.status == 0) {
+                                RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
+                            } else {
+                                RED.notify(node._("common.notification.error", {
+                                    message: node._("common.notification.errors.unexpected", {
+                                        status: jqXHR.status,
+                                        message: textStatus
+                                    })
+                                }), "error");
+                            }
                         }
+                    });
+                });
+            }
+
+            function clearZNodeList() {
+                $("#node-config-container").empty();
+                index = 0;
+            }
+
+            function fillZNodeList(znodeid, znode) {
+                var container = $('<li/>', {style: "background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});
+                var row = $('<div/>').appendTo(container);
+                var classesField = $('<a href="#" class="editor-button editor-button-small" style="width: 60px; height: 34px; position: relative; line-height: 34px; font-size: 12px;"><span data-i18n="openzwave.label.classes">classes</span></a>').appendTo(row);
+
+                classesField.click(function () {
+                    var zclass;
+                    for (var classId in znode.classes) {
+                        zclass = znode.classes[classId][1][0];
+                        console.log(zclass);
                     }
                 });
-            });
-            $('#node-config-cancel-add-remove').click(function () {
-                $.ajax({
-                    url: "openzwave/" + node.id + "/cancel",
-                    type: "POST",
-                    success: function (resp) {
-                        RED.notify(node._("openzwave.success", {label: 'cancel'}), "success");
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        if (jqXHR.status == 404) {
-                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.not-deployed")}), "error");
-                        } else if (jqXHR.status == 500) {
-                            RED.notify(node._("common.notification.error", {message: node._("openzwave.errors.failed")}), "error");
-                        } else if (jqXHR.status == 0) {
-                            RED.notify(node._("common.notification.error", {message: node._("common.notification.errors.no-response")}), "error");
-                        } else {
-                            RED.notify(node._("common.notification.error", {
-                                message: node._("common.notification.errors.unexpected", {
-                                    status: jqXHR.status,
-                                    message: textStatus
-                                })
-                            }), "error");
-                        }
-                    }
-                });
-            });
+
+                var nodeidField = $('<input/>', {
+                    class: "node-config-container-nodeid",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 25px;",
+                    placeholder: "NodeId   "
+                }).appendTo(row);
+                var typeField = $('<input/>', {
+                    class: "node-config-container-type",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 200px;",
+                    placeholder: "Type   "
+                }).appendTo(row);
+                var manufacturerField = $('<input/>', {
+                    class: "node-config-container-manufacturer",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 100px;",
+                    placeholder: "Manufacturer   "
+                }).appendTo(row);
+                var readyField = $('<input/>', {
+                    class: "node-config-container-ready",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 35px;",
+                    placeholder: "Ready "
+                }).appendTo(row);
+
+                var finalspan = $('<span/>', {style: "float: right;margin-right: 10px;"}).appendTo(row);
+                finalspan.append('<span class="node-config-container-index">' + ( ++index) + '</span> ');
+
+                $("#node-config-container").append(container);
+
+
+                nodeidField.val(znodeid);
+                typeField.val(znode.type);
+                manufacturerField.val(znode.manufacturer);
+                readyField.val(znode.ready);
+            }
+
+            bindSend('node-config-add-node', 'add');
+            bindSend('node-config-remove-node', 'remove');
+            bindSend('node-config-remove-dead-nodes', 'remove_dead');
+            bindSend('node-config-cancel-add-remove', 'cancel');
+            bindSend('node-config-soft-reset', 'soft_reset');
+
+            $('#node-config-refresh-nodes').click(getNodes);
+            getHomeID();
+            getNodes();
         }
     });
-    RED.nodes.registerType('zwave-in',{
-        category:'input',
-        color: 	'pink',
+    RED.nodes.registerType('zwave-in', {
+        category: 'input',
+        color: 'pink',
         defaults: {
-			name:       {value:""},
-			controller: {value:"", type:"zwave-controller"},
+            name: {value: ""},
+            controller: {value: "", type: "zwave-controller"},
         },
-        inputs:0,
-        outputs:1,
+        inputs: 0,
+        outputs: 1,
         icon: "zwave.png",
-        label: function() { return (this.name || ""); }
+        label: function () {
+            return (this.name || "");
+        }
     });
-    RED.nodes.registerType('zwave-out',{
-        category:'output',
-        color: 	'pink',
+    RED.nodes.registerType('zwave-out', {
+        category: 'output',
+        color: 'pink',
         defaults: {
-			name:       {value:""},
-			controller: {value:"", type:"zwave-controller"},
+            name: {value: ""},
+            controller: {value: "", type: "zwave-controller"},
         },
-        inputs:1,
-        outputs:0,
+        inputs: 1,
+        outputs: 0,
         icon: "zwave.png",
-        label: function() { return (this.name || ""); }
+        label: function () {
+            return (this.name || "");
+        }
     });
 </script>
