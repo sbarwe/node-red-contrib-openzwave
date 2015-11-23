@@ -51,6 +51,8 @@
 
 
 
+
+
 </script>
 
 
@@ -63,6 +65,8 @@
         <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
         <input type="text" id="node-input-controller">
     </div>
+
+
 
 
 
@@ -82,6 +86,8 @@
 
 
 
+
+
 </script>
 
 <!-- ==============================================================================================   -->
@@ -89,6 +95,8 @@
 <script type="text/x-red" data-help-name="zwave-in">
     <p><b>Input node for ZWave events.</b><br/>
 	Fires node-red events when a ZWave ValueID is changed. See OpenZWave documentation on ValueIDs.</p>
+
+
 
 
 
@@ -119,105 +127,98 @@
 
 
 
+
+
 </script>
 
 <script type="text/javascript">
     var ZWAVE_CLASSES = {
-        0: 'COMMAND_CLASS_NO_OPERATION',
-        2: 'COMMAND_CLASS_BASIC',
-        3: 'COMMAND_CLASS_CONTROLLER_REPLICATION',
-        4: 'COMMAND_CLASS_APPLICATION_STATUS',
-        5: 'COMMAND_CLASS_ZIP_SERVICES',
-        6: 'COMMAND_CLASS_ZIP_SERVER',
-        7: 'COMMAND_CLASS_SWITCH_BINARY',
-        8: 'COMMAND_CLASS_SWITCH_MULTILEVEL',
-        8: 'COMMAND_CLASS_SWITCH_MULTILEVEL_V2',
-        9: 'COMMAND_CLASS_SWITCH_ALL',
-        0: 'COMMAND_CLASS_SWITCH_TOGGLE_BINARY',
-        1: 'COMMAND_CLASS_SWITCH_TOGGLE_MULTILEVEL',
-        2: 'COMMAND_CLASS_CHIMNEY_FAN',
-        3: 'COMMAND_CLASS_SCENE_ACTIVATION',
-        4: 'COMMAND_CLASS_SCENE_ACTUATOR_CONF',
-        5: 'COMMAND_CLASS_SCENE_CONTROLLER_CONF',
-        6: 'COMMAND_CLASS_ZIP_CLIENT',
-        7: 'COMMAND_CLASS_ZIP_ADV_SERVICES',
-        8: 'COMMAND_CLASS_SENSOR_BINARY',
-        9: 'COMMAND_CLASS_SENSOR_MULTILEVEL',
-        9: 'COMMAND_CLASS_SENSOR_MULTILEVEL_V2',
-        0: 'COMMAND_CLASS_METER',
-        1: 'COMMAND_CLASS_ZIP_ADV_SERVER',
-        2: 'COMMAND_CLASS_ZIP_ADV_CLIENT',
-        3: 'COMMAND_CLASS_METER_PULSE',
-        0: 'COMMAND_CLASS_METER_TBL_CONFIG',
-        1: 'COMMAND_CLASS_METER_TBL_MONITOR',
-        2: 'COMMAND_CLASS_METER_TBL_PUSH',
-        6: 'COMMAND_CLASS_THERMOSTAT_HEATING',
-        4: 'COMMAND_CLASS_THERMOSTAT_MODE',
-        6: 'COMMAND_CLASS_THERMOSTAT_OPERATING_STATE',
-        7: 'COMMAND_CLASS_THERMOSTAT_SETPOINT',
-        8: 'COMMAND_CLASS_THERMOSTAT_FAN_MODE',
-        9: 'COMMAND_CLASS_THERMOSTAT_FAN_STATE',
-        0: 'COMMAND_CLASS_CLIMATE_CONTROL_SCHEDULE',
-        1: 'COMMAND_CLASS_THERMOSTAT_SETBACK',
-        6: 'COMMAND_CLASS_DOOR_LOCK_LOGGING',
-        8: 'COMMAND_CLASS_SCHEDULE_ENTRY_LOCK',
-        0: 'COMMAND_CLASS_BASIC_WINDOW_COVERING',
-        1: 'COMMAND_CLASS_MTP_WINDOW_COVERING',
-        6: 'COMMAND_CLASS_MULTI_CHANNEL_V2',
-        6: 'COMMAND_CLASS_MULTI_INSTANCE',
-        8: 'COMMAND_CLASS_DOOR_LOCK',
-        9: 'COMMAND_CLASS_USER_CODE',
-        02: 'COMMAND_CLASS_BARRIER_OPERATOR',
-        12: 'COMMAND_CLASS_CONFIGURATION',
-        12: 'COMMAND_CLASS_CONFIGURATION_V2',
-        13: 'COMMAND_CLASS_ALARM',
-        14: 'COMMAND_CLASS_MANUFACTURER_SPECIFIC',
-        15: 'COMMAND_CLASS_POWERLEVEL',
-        17: 'COMMAND_CLASS_PROTECTION',
-        17: 'COMMAND_CLASS_PROTECTION_V2',
-        18: 'COMMAND_CLASS_LOCK',
-        19: 'COMMAND_CLASS_NODE_NAMING',
-        22: 'COMMAND_CLASS_FIRMWARE_UPDATE_MD',
-        23: 'COMMAND_CLASS_GROUPING_NAME',
-        24: 'COMMAND_CLASS_REMOTE_ASSOCIATION_ACTIVATE',
-        25: 'COMMAND_CLASS_REMOTE_ASSOCIATION',
-        28: 'COMMAND_CLASS_BATTERY',
-        29: 'COMMAND_CLASS_CLOCK',
-        30: 'COMMAND_CLASS_HAIL',
-        32: 'COMMAND_CLASS_WAKE_UP',
-        32: 'COMMAND_CLASS_WAKE_UP_V2',
-        33: 'COMMAND_CLASS_ASSOCIATION',
-        33: 'COMMAND_CLASS_ASSOCIATION_V2',
-        34: 'COMMAND_CLASS_VERSION',
-        35: 'COMMAND_CLASS_INDICATOR',
-        36: 'COMMAND_CLASS_PROPRIETARY',
-        37: 'COMMAND_CLASS_LANGUAGE',
-        38: 'COMMAND_CLASS_TIME',
-        39: 'COMMAND_CLASS_TIME_PARAMETERS',
-        40: 'COMMAND_CLASS_GEOGRAPHIC_LOCATION',
-        41: 'COMMAND_CLASS_COMPOSITE',
-        42: 'COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION_V2',
-        42: 'COMMAND_CLASS_MULTI_INSTANCE_ASSOCIATION',
-        43: 'COMMAND_CLASS_MULTI_CMD',
-        44: 'COMMAND_CLASS_ENERGY_PRODUCTION',
-        45: 'COMMAND_CLASS_MANUFACTURER_PROPRIETARY',
-        46: 'COMMAND_CLASS_SCREEN_MD',
-        46: 'COMMAND_CLASS_SCREEN_MD_V2',
-        47: 'COMMAND_CLASS_SCREEN_ATTRIBUTES',
-        47: 'COMMAND_CLASS_SCREEN_ATTRIBUTES_V2',
-        48: 'COMMAND_CLASS_SIMPLE_AV_CONTROL',
-        49: 'COMMAND_CLASS_AV_CONTENT_DIRECTORY_MD',
-        50: 'COMMAND_CLASS_AV_RENDERER_STATUS',
-        51: 'COMMAND_CLASS_AV_CONTENT_SEARCH_MD',
-        52: 'COMMAND_CLASS_SECURITY',
-        53: 'COMMAND_CLASS_AV_TAGGING_MD',
-        54: 'COMMAND_CLASS_IP_CONFIGURATION',
-        55: 'COMMAND_CLASS_ASSOCIATION_COMMAND_CONFIGURATION',
-        56: 'COMMAND_CLASS_SENSOR_ALARM',
-        57: 'COMMAND_CLASS_SILENCE_ALARM',
-        58: 'COMMAND_CLASS_SENSOR_CONFIGURATION',
-        39: 'COMMAND_CLASS_MARK',
-        40: 'COMMAND_CLASS_NON_INTEROPERABLE'
+        32: 'BASIC',
+        33: 'CONTROLLER REPLICATION',
+        34: 'APPLICATION STATUS',
+        35: 'ZIP SERVICES',
+        36: 'ZIP SERVER',
+        37: 'SWITCH BINARY',
+        38: 'SWITCH MULTILEVEL',
+        39: 'SWITCH ALL',
+        40: 'SWITCH TOGGLE BINARY',
+        41: 'SWITCH TOGGLE MULTILEVEL',
+        42: 'CHIMNEY FAN',
+        43: 'SCENE ACTIVATION',
+        44: 'SCENE ACTUATOR CONF',
+        45: 'SCENE CONTROLLER CONF',
+        46: 'ZIP CLIENT',
+        47: 'ZIP ADV SERVICES',
+        48: 'SENSOR BINARY',
+        49: 'SENSOR MULTILEVEL',
+        50: 'METER',
+        51: 'ZIP ADV SERVER',
+        52: 'ZIP ADV CLIENT',
+        53: 'METER PULSE',
+        60: 'METER TBL CONFIG',
+        61: 'METER TBL MONITOR',
+        62: 'METER TBL PUSH',
+        56: 'THERMOSTAT HEATING',
+        64: 'THERMOSTAT MODE',
+        66: 'THERMOSTAT OPERATING STATE',
+        67: 'THERMOSTAT SETPOINT',
+        68: 'THERMOSTAT FAN MODE',
+        69: 'THERMOSTAT FAN STATE',
+        70: 'CLIMATE CONTROL SCHEDULE',
+        71: 'THERMOSTAT SETBACK',
+        74: 'TARIF CONFIG',
+        75: 'TARIF TABLE MONITOR',
+        76: 'COMMAND CLASS DOOR LOCK LOGGING',
+        78: 'SCHEDULE ENTRY LOCK',
+        79: 'ZIP 6LOWPAN',
+        80: 'BASIC WINDOW COVERING',
+        81: 'MTP WINDOW COVERING',
+        96: 'MULTI INSTANCE',
+        98: 'DOOR LOCK',
+        99: 'USER CODE',
+        112: 'CONFIGURATION',
+        113: 'ALARM',
+        114: 'MANUFACTURER SPECIFIC',
+        115: 'POWER LEVEL',
+        117: 'PROTECTION',
+        118: 'LOCK',
+        119: 'NODE NAMING',
+        122: 'FIRMWARE UPDATE MD',
+        123: 'GROUPING NAME',
+        124: 'REMOTE ASSOCIATION ACTIVATE',
+        125: 'REMOTE ASSOCIATION',
+        128: 'BATTERY',
+        129: 'CLOCK',
+        130: 'HAIL',
+        132: 'WAKE UP',
+        133: 'ASSOCIATION',
+        134: 'VERSION',
+        135: 'INDICATOR',
+        136: 'PROPRIETARY',
+        137: 'LANGUAGE',
+        138: 'TIME',
+        139: 'TIME PARAMETERS',
+        140: 'GEOGRAPHIC LOCATION',
+        141: 'COMPOSITE',
+        142: 'MULTI INSTANCE ASSOCIATION',
+        143: 'MULTI CMD',
+        144: 'ENERGY PRODUCTION',
+        145: 'MANUFACTURER PROPRIETARY',
+        146: 'SCREEN MD',
+        147: 'SCREEN ATTRIBUTES',
+        148: 'SIMPLE AV CONTROL',
+        149: 'AV CONTENT DIRECTORY MD',
+        150: 'AV RENDERER STATUS',
+        151: 'AV CONTENT SEARCH MD',
+        152: 'SECURITY',
+        153: 'AV TAGGING MD',
+        154: 'IP CONFIGURATION',
+        155: 'ASSOCIATION COMMAND CONFIGURATION',
+        156: 'SENSOR ALARM',
+        157: 'SILENCE ALARM',
+        158: 'SENSOR CONFIGURATION',
+        239: 'MARK',
+        240: 'NON INTEROPERABLE'
     }
     RED.nodes.registerType('zwave-controller', {
         category: 'config',
@@ -341,28 +342,34 @@
                 classesField.click(function () {
                     var zclasses_html = $('<table class="table table-bordered table-striped"><tr><th>class</th><th>label</th><th>type</th><th>instance : index</th><th>permission</th><th>polled</th><th>min:max</th><th>value (in units)</th></tr></table>');
                     var zclass;
-                    for (var classId in znode.classes) {
-                        zclass = znode.classes[classId][1][0] || znode.classes[classId][1][1];
-                        if (!zclass)
-                            continue;
-                        var zclass_tr = $('<tr></tr>');
-                        zclass_tr.append('<td style="overflow-x: scroll; max-width: 200px;">' + (ZWAVE_CLASSES[zclass.class_id] ? ('(' + zclass.class_id + ') ' + ZWAVE_CLASSES[zclass.class_id]) : ('(' + zclass.class_id + ')') ) + '</td>')
-                        zclass_tr.append('<td>' + zclass.label + '</td>')
-                        zclass_tr.append('<td>' + zclass.type + '</td>')
-                        zclass_tr.append('<td>' + zclass.instance + ':' + zclass.index + '</td>')
-                        zclass_tr.append('<td>read_only:' + zclass.read_only + '<br/>write_only:' + zclass.write_only + '</td>')
-                        zclass_tr.append('<td>polled:' + zclass.is_polled + '</td>')
-                        var valueTD = $('<td>Value: ' + zclass.value + ' ' + zclass.units + '</td>');
-                        if (zclass.values) {
-                            valueTD.append('<br/>Allowed values:<br/><ul>');
-                            for (var valueKey in zclass.values)
-                                valueTD.append('<li>' + zclass.values[valueKey] + '</li>');
-                            valueTD.append('</ul>');
-                        }
-                        zclass_tr.append('<td>min: ' + zclass.min + ', max: ' + zclass.max + '</td>')
-                        zclass_tr.append(valueTD);
-                        zclasses_html.append(zclass_tr);
-                    }
+                    var zclass_tr;
+                    for (var classId in znode.classes)
+                        for (var classInstance in  znode.classes[classId])
+                            for (var classIndex in  znode.classes[classId][classInstance]) {
+                                zclass = znode.classes[classId][classInstance][classIndex];
+                                if (!zclass) {
+                                    zclass_tr = $('<tr><td colspan="8">' + JSON.stringify(znode.classes[classId]) + '</td></tr>');
+                                    zclasses_html.append(zclass_tr);
+                                    continue;
+                                }
+                                zclass_tr = $('<tr></tr>');
+                                zclass_tr.append('<td>' + (ZWAVE_CLASSES[zclass.class_id] ? ('(' + zclass.class_id + ') ' + ZWAVE_CLASSES[zclass.class_id]) : ('(' + zclass.class_id + ')') ) + '</td>')
+                                zclass_tr.append('<td>' + zclass.label + '</td>')
+                                zclass_tr.append('<td>' + zclass.type + '</td>')
+                                zclass_tr.append('<td>' + zclass.instance + ':' + zclass.index + '</td>')
+                                zclass_tr.append('<td>read_only:' + zclass.read_only + '<br/>write_only:' + zclass.write_only + '</td>')
+                                zclass_tr.append('<td>polled:' + zclass.is_polled + '</td>')
+                                var valueTD = $('<td>Value: ' + zclass.value + ' ' + zclass.units + '</td>');
+                                if (zclass.values) {
+                                    valueTD.append('<br/>Allowed values:<br/><ul>');
+                                    for (var valueKey in zclass.values)
+                                        valueTD.append('<li>' + zclass.values[valueKey] + '</li>');
+                                    valueTD.append('</ul>');
+                                }
+                                zclass_tr.append('<td>min: ' + zclass.min + ', max: ' + zclass.max + '</td>')
+                                zclass_tr.append(valueTD);
+                                zclasses_html.append(zclass_tr);
+                            }
                     var dialogContent = $('<div id="node-additional-dialog" class="hide ui-dialog-content ui-widget-content" style="display: block; width: auto; min-height: 150px; max-height: none; height: auto;">');
                     dialogContent.append(zclasses_html);
                     dialogContent.dialog({
