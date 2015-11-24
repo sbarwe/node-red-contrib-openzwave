@@ -26,7 +26,7 @@ require('getmac').getMac(function (err, macAddress) {
 });
 
 /* set this to true to get some incomprehensible Klingon text in your console */
-var debug = true;
+var debug = false;
 if (debug) console.log("booting up node-red-contrib-openzwave");
 
 module.exports = function (RED) {
@@ -474,7 +474,6 @@ module.exports = function (RED) {
             var command = req.params.command ? req.params.command.toString() : null;
             switch (command) {
                 case 'add':
-                    console.log('------------------ AddDevice');
                     if (ozwDriver.addNode)
                         ozwDriver.addNode(false);
                     else
@@ -486,18 +485,15 @@ module.exports = function (RED) {
                     break;
                 case 'remove':
                 case 'delete':
-                    console.log('------------------ RemoveDevice');
                     ozwDriver.beginControllerCommand('RemoveDevice', true);
                     res.send(200);
                     break;
                 case 'remove_dead':
                 case 'delete_failed':
-                    console.log('------------------ RemoveFailedNode');
                     ozwDriver.beginControllerCommand('RemoveFailedNode', true);
                     res.send(200);
                     break;
                 case 'cancel':
-                    console.log('------------------ cancelControllerCommand');
                     ozwDriver.cancelControllerCommand(true);
                     res.send(200);
                     break;
