@@ -20,7 +20,8 @@
 <script type="text/x-red" data-template-name="zwave-controller">
     <div class="form-row">
         <label for="node-config-input-port"><i class="icon-bookmark"></i> Port</label>
-        <input type="text" id="node-config-input-port">
+        <input type="text" id="node-config-input-port" style="width:60%;" data-i18n="[placeholder]serial.placeholder.port">
+        <a id="node-config-lookup-serial" class="btn"><i id="node-config-lookup-serial-icon" class="fa fa-search"></i></a>
     </div>
     <div class="form-row">
         <label for="node-config-input-driverattempts"><i class="icon-bookmark"></i> Driver attempts</label>
@@ -47,12 +48,6 @@
             <ol id="node-config-container" style=" list-style-type:none; margin: 0;"></ol>
         </div>
     </div>
-
-
-
-
-
-
 </script>
 
 
@@ -65,12 +60,6 @@
         <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
         <input type="text" id="node-input-controller">
     </div>
-
-
-
-
-
-
 </script>
 
 <script type="text/x-red" data-template-name="zwave-out">
@@ -82,12 +71,6 @@
         <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
         <input type="text" id="node-input-controller">
     </div>
-
-
-
-
-
-
 </script>
 
 <!-- ==============================================================================================   -->
@@ -95,12 +78,6 @@
 <script type="text/x-red" data-help-name="zwave-in">
     <p><b>Input node for ZWave events.</b><br/>
 	Fires node-red events when a ZWave ValueID is changed. See OpenZWave documentation on ValueIDs.</p>
-
-
-
-
-
-
 </script>
 
 <script type="text/x-red" data-help-name="zwave-out">
@@ -123,12 +100,6 @@
 		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
 		<br/>&nbsp;&nbsp;<b>msg.payload.paramId: (REQUIRED for all topics)</b> configuration parameter number (decimal index)
     </p>
-
-
-
-
-
-
 </script>
 
 <script type="text/javascript">
@@ -429,6 +400,32 @@
             $('#node-config-refresh-nodes').click(getNodes);
             getHomeID();
             getNodes();
+
+            try {
+                $("#node-config-input-port").autocomplete( "destroy" );
+            } catch(err) {
+            }
+            $("#node-config-lookup-serial").click(function() {
+                //$("#node-config-lookup-serial-icon").removeClass('fa fa-search');
+                //$("#node-config-lookup-serial-icon").addClass('fa fa-spinner');
+                $("#node-config-lookup-serial").addClass('disabled');
+                $.getJSON('openzwaveports',function(data) {
+                    //$("#node-config-lookup-serial-icon").addClass('fa fa-search');
+                    //$("#node-config-lookup-serial-icon").removeClass('fa fa-spinner');
+                    $("#node-config-lookup-serial").removeClass('disabled');
+                    var ports = [];
+                    $.each(data, function(i, port){
+                        ports.push(port.comName);
+                    });
+                    $("#node-config-input-port").autocomplete({
+                        source:ports,
+                        minLength:0,
+                        close: function( event, ui ) {
+                            $("#node-config-input-port").autocomplete( "destroy" );
+                        }
+                    }).autocomplete("search","");
+                });
+            });
         }
     });
     RED.nodes.registerType('zwave-in', {

@@ -20,7 +20,6 @@
 
 var UUIDPREFIX = "_macaddr_";
 var HOMENAME = "_homename_";
-
 require('getmac').getMac(function (err, macAddress) {
     if (err) throw err;
     UUIDPREFIX = macAddress.replace(/:/gi, '');
@@ -31,6 +30,7 @@ var debug = true;
 if (debug) console.log("booting up node-red-contrib-openzwave");
 
 module.exports = function (RED) {
+    var serialp = require("serialport");
     var OpenZWave = require('openzwave-shared');
 
     var ozwConfig = {};
@@ -519,5 +519,10 @@ module.exports = function (RED) {
             console.log(err);
             node.error(RED._("openzwave.failed", {error: err.toString()}));
         }
+    });
+    RED.httpAdmin.get("/openzwaveports", RED.auth.needsPermission('serial.read'), function(req,res) {
+        serialp.list(function (err, ports) {
+            res.json(ports);
+        });
     });
 }

@@ -4,7 +4,8 @@
   "description": "ZWave for node-red through OpenZWave, the open source ZWave library",
   "dependencies": {
     "openzwave-shared": ">= 1.1.4",
-    "getmac": ">= 1.0.0"
+    "getmac": ">= 1.0.0",
+    "serialport": "1.7.*"
   },
   "repository": {
     "type": "git",
