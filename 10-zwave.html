@@ -41,6 +41,7 @@
         <input id="node-config-remove-dead-nodes" type="button" value="Remove dead nodes" style="margin-right: 5px; width: 170px;"/>
         <input id="node-config-cancel-add-remove" type="button" value="Cancel Add/Remove node" style="width: 200px;"/>
         <input id="node-config-soft-reset" type="button" value="SoftReset" style="width: 200px;"/>
+        <input id="node-config-heal-network" type="button" value="HealNetwork" style="width: 200px;"/>
     </div>
     <div class="form-row node-config-container-row" style="margin-bottom: 0px;">
         <input id="node-config-refresh-nodes" type="button" value="Refresh" style="width: 100px;"/><br/>
@@ -83,7 +84,7 @@
 <script type="text/x-red" data-help-name="zwave-out">
     <p><b>Output node for ZWave commands.</b><br/>
 	Use this to control individual ZWave devices. See OpenZWave documentation on ValueIDs.<br/>
-	<b>msg.topic</b> can be: <b>setLevel, setValue, switchOn, switchOff, setConfigParam, requestConfigParam</b><br/>
+	<b>msg.topic</b> can be: <b>setLevel, setValue, switchOn, switchOff, setConfigParam, requestConfigParam, requestAllConfigParams</b><br/>
 	<b>msg.payload</b> has these sub-elements:<br/>
 		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
 		<br/>&nbsp;&nbsp;<b>msg.payload.cmdclass</b>(default:37) OZW command class in decimal (eg. 37 for switches, 38 for dimmers)
@@ -99,6 +100,9 @@
 	<b>msg.payload</b> has these sub-elements for requestConfigParam action:<br/>
 		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
 		<br/>&nbsp;&nbsp;<b>msg.payload.paramId: (REQUIRED for all topics)</b> configuration parameter number (decimal index)
+    </p>
+	<b>msg.payload</b> has this sub-element for requestAllConfigParams action:<br/>
+		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
     </p>
 </script>
 
@@ -371,12 +375,26 @@
                     style: "margin-left: 5px; width: 100px;",
                     placeholder: "Manufacturer   "
                 }).appendTo(row);
+                var availField = $('<input/>', {
+                    class: "node-config-container-available",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 65px;",
+                    placeholder: "Available "
+                }).appendTo(row);
                 var readyField = $('<input/>', {
                     class: "node-config-container-ready",
                     type: "text",
                     disabled: "true",
-                    style: "margin-left: 5px; width: 35px;",
+                    style: "margin-left: 5px; width: 65px;",
                     placeholder: "Ready "
+                }).appendTo(row);
+                var aliveField = $('<input/>', {
+                    class: "node-config-container-alive",
+                    type: "text",
+                    disabled: "true",
+                    style: "margin-left: 5px; width: 65px;",
+                    placeholder: "Alive "
                 }).appendTo(row);
 
                 var finalspan = $('<span/>', {style: "float: right;margin-right: 10px;"}).appendTo(row);
@@ -388,7 +406,9 @@
                 nodeidField.val(znodeid);
                 typeField.val(znode.type);
                 manufacturerField.val(znode.manufacturer);
-                readyField.val(znode.ready);
+                availField.val('avail['+(znode.available ? 't' : 'f')+']');
+                readyField.val('ready['+(znode.ready ? 't' : 'f')+']');
+                aliveField.val(znode.alive ? 'alive' : 'dead');
             }
 
             bindSend('node-config-add-node', 'add');
@@ -396,6 +416,7 @@
             bindSend('node-config-remove-dead-nodes', 'remove_dead');
             bindSend('node-config-cancel-add-remove', 'cancel');
             bindSend('node-config-soft-reset', 'soft_reset');
+            bindSend('node-config-heal-network', 'heal_network');
 
             $('#node-config-refresh-nodes').click(getNodes);
             getHomeID();
