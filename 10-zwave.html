@@ -23,18 +23,39 @@
         <input type="text" id="node-config-input-port" style="width:60%;" data-i18n="[placeholder]serial.placeholder.port">
         <a id="node-config-lookup-serial" class="btn"><i id="node-config-lookup-serial-icon" class="fa fa-search"></i></a>
     </div>
+	<div class="form-row">
+        <label for="homeid"><i class="icon-bookmark"></i> HomeID</label>
+        <input type="text" id="homeid" disabled="true" size="16">
+    </div>
     <div class="form-row">
         <label for="node-config-input-driverattempts"><i class="icon-bookmark"></i> Driver attempts</label>
         <input type="text" id="node-config-input-driverattempts">
     </div>
     <div class="form-row">
-        <label for="node-config-input-pollinterval"><i class="icon-bookmark"></i> Poll interval</label>
-        <input type="text" id="node-config-input-pollinterval">
+        <label for="node-config-input-pollinterval"><i class="icon-bookmark"></i> Poll interval (ms)</label>
+        <input type="text" id="node-config-input-pollinterval" placeholder="10000 ms">
     </div>
     <div class="form-row">
-        <label for="homeid"><i class="icon-bookmark"></i> HomeID</label>
-        <input type="text" id="homeid" disabled="true" size="16">
+        <label for="node-config-input-allowunreadyupdates" style="vertical-align: top"><i class="icon-bookmark"></i> Pre-wake Updates</label>
+        <input type="checkbox" id="node-config-input-allowunreadyupdates" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-config-input-allowunreadyupdates" style="width: 70%;">Allow updates from devices not fully scanned?</label>
     </div>
+	<div class="form-row">
+        <label for="node-config-input-logging" style="vertical-align: top"><i class="icon-bookmark"></i> Logging</label>
+        <select id="node-config-input-logging" style="width:70%">
+			<option value="0">No Logging</option>
+			<option value="1">All Messages</option>
+			<option value="2">Fatal Messages Only</option>
+			<option value="3">Error Messages and Higher</option>
+			<option value="4">Warning Messages and Higher</option>
+			<option value="5">Alert Messages and Higher</option>
+			<option value="6">Info Messages and Higher</option>
+			<option value="7">Detailed Messages and Higher</option>
+			<option value="8">Debug Messages and Higher</option>
+			<option value="9">Protocol Information and Higher</option>
+        </select>
+    </div>
+
     <div class="form-row">
         <input id="node-config-add-node" type="button" value="Add node" style="margin-right: 5px; width: 100px;"/>
         <input id="node-config-remove-node" type="button" value="Remove node" style="margin-right: 5px; width: 120px;"/>
@@ -74,7 +95,144 @@
     </div>
 </script>
 
+
+<script type="text/x-red" data-template-name="zwave-cmd">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Node Name</label>
+        <input type="text" id="node-input-name" placeholder="ZWave status">
+    </div>                  
+    <div class="form-row">
+        <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="icon-bookmark"></i> Topic</label>
+        <select id="node-input-topic">
+            <option value=""><i>use msg.topic</i></option>
+            <option value="setConfigParam">setConfigParam</option>
+            <option value="requestConfigParam">requestConfigParam</option>
+            <option value="requestAllConfigParams">requestAllConfigParams</option>
+            <option value="hardReset">hardReset</option>
+            <option value="softReset">softReset</option>
+            <option value="getControllerNodeId">getControllerNodeId</option>
+            <option value="getSUCNodeId">getSUCNodeId</option>
+            <option value="isPrimaryController">isPrimaryController</option>
+            <option value="isStaticUpdateController">isStaticUpdateController</option>
+            <option value="isBridgeController">isBridgeController</option>
+            <option value="getLibraryVersion">getLibraryVersion</option>
+            <option value="getLibraryTypeName">getLibraryTypeName</option>
+            <option value="getSendQueueCount">getSendQueueCount</option>
+            <option value="connect">connect</option>
+            <option value="disconnect">disconnect</option>
+            <option value="getNumGroups">getNumGroups</option>
+            <option value="getAssociations">getAssociations</option>
+            <option value="getMaxAssociations">getMaxAssociations</option>
+            <option value="getGroupLabel">getGroupLabel</option>
+            <option value="addAssociation">addAssociation</option>
+            <option value="removeAssociation">removeAssociation</option>
+            <option value="addNode">addNode</option>
+            <option value="removeNode">removeNode</option>
+            <option value="removeFailedNode">removeFailedNode</option>
+            <option value="hasNodeFailed">hasNodeFailed</option>
+            <option value="requestNodeNeighborUpdate">requestNodeNeighborUpdate</option>
+            <option value="assignReturnRoute">assignReturnRoute</option>
+            <option value="deleteAllReturnRoutes">deleteAllReturnRoutes</option>
+            <option value="sendNodeInformation">sendNodeInformation</option>
+            <option value="createNewPrimary">createNewPrimary</option>
+            <option value="receiveConfiguration">receiveConfiguration</option>
+            <option value="replaceFailedNode">replaceFailedNode</option>
+            <option value="transferPrimaryRole">transferPrimaryRole</option>
+            <option value="requestNetworkUpdate">requestNetworkUpdate</option>
+            <option value="replicationSend">replicationSend</option>
+            <option value="createButton">createButton</option>
+            <option value="deleteButton">deleteButton</option>
+            <option value="beginControllerCommand">beginControllerCommand</option>
+            <option value="cancelControllerCommand">cancelControllerCommand</option>
+            <option value="testNetworkNode">testNetworkNode</option>
+            <option value="testNetwork">testNetwork</option>
+            <option value="healNetworkNode">healNetworkNode</option>
+            <option value="healNetwork">healNetwork</option>
+            <option value="setNodeOn">setNodeOn</option>
+            <option value="setNodeOff">setNodeOff</option>
+            <option value="setNodeLevel">setNodeLevel</option>
+            <option value="switchAllOn">switchAllOn</option>
+            <option value="switchAllOff">switchAllOff</option>
+            <option value="pressButton">pressButton</option>
+            <option value="refreshNodeInfo">refreshNodeInfo</option>
+            <option value="requestNodeState">requestNodeState</option>
+            <option value="requestNodeDynamic">requestNodeDynamic</option>
+            <option value="getNodeLocation">getNodeLocation</option>
+            <option value="setNodeLocation">setNodeLocation</option>
+            <option value="getNodeName">getNodeName</option>
+            <option value="setNodeName">setNodeName</option>
+            <option value="getNodeManufacturerName">getNodeManufacturerName</option>
+            <option value="setNodeManufacturerName">setNodeManufacturerName</option>
+            <option value="getNodeProductName">getNodeProductName</option>
+            <option value="setNodeProductName">setNodeProductName</option>
+            <option value="getNodeMaxBaudRate">getNodeMaxBaudRate</option>
+            <option value="getNodeVersion">getNodeVersion</option>
+            <option value="getNodeBasic">getNodeBasic</option>
+            <option value="getNodeGeneric">getNodeGeneric</option>
+            <option value="getNodeManufacturerId">getNodeManufacturerId</option>
+            <option value="getNodeNeighbors">getNodeNeighbors</option>
+            <option value="getNodeProductId">getNodeProductId</option>
+            <option value="getNodeProductType">getNodeProductType</option>
+            <option value="getNodeSecurity">getNodeSecurity</option>
+            <option value="getNodeSpecific">getNodeSpecific</option>
+            <option value="getNodeType">getNodeType</option>
+            <option value="isNodeListeningDevice">isNodeListeningDevice</option>
+            <option value="isNodeFrequentListeningDevice">isNodeFrequentListeningDevice</option>
+            <option value="isNodeBeamingDevice">isNodeBeamingDevice</option>
+            <option value="isNodeRoutingDevice">isNodeRoutingDevice</option>
+            <option value="isNodeSecurityDevice">isNodeSecurityDevice</option>
+            <option value="setValue">setValue</option>
+            <option value="refreshValue">refreshValue</option>
+            <option value="setChangeVerified">setChangeVerified</option>
+            <option value="getNumSwitchPoints">getNumSwitchPoints</option>
+            <option value="clearSwitchPoints">clearSwitchPoints</option>
+            <option value="getSwitchPoint">getSwitchPoint</option>
+            <option value="setSwitchPoint">setSwitchPoint</option>
+            <option value="removeSwitchPoint">removeSwitchPoint</option>
+            <option value="enablePoll">enablePoll</option>
+            <option value="disablePoll">disablePoll</option>
+            <option value="isPolled">isPolled</option>
+            <option value="getPollInterval">getPollInterval</option>
+            <option value="setPollInterval">setPollInterval</option>
+            <option value="getPollIntensity">getPollIntensity</option>
+            <option value="setPollIntensity">setPollIntensity</option>
+            <option value="createScene">createScene</option>
+            <option value="removeScene">removeScene</option>
+            <option value="getScenes">getScenes</option>
+            <option value="addSceneValue">addSceneValue</option>
+            <option value="removeSceneValue">removeSceneValue</option>
+            <option value="sceneGetValues">sceneGetValues</option>
+            <option value="activateScene">activateScene</option>
+        </select>
+    </div>
+</script>
 <!-- ==============================================================================================   -->
+
+<script type="text/x-red" data-help-name="zwave-controller">
+	<ul>
+		<li><b><i class="icon-bookmark"></i> Port:</b>
+		  The serial port your ZWave controller stick is attached to. Usual values:
+		  <pre>/dev/ttyUSB0</pre> in Linux,  <pre>/dev/cu.usbmodem1411</pre> in MacOSX, <pre>\\\\.\\COM3</pre> in Windows.
+		</li>
+		<li><b><i class="icon-bookmark"></i> Driver attempts:</b>
+		  How many attempts should OpenZWave make to set up the controller.
+		</li>
+		<li><b><i class="icon-bookmark"></i> Poll interval:</b>
+		  How often to poll devices that do not offer automatic feedback on their status, in milliseconds.
+		</li>
+		<li><b><i class="icon-bookmark"></i> Pre-wake Updates:</b>
+		  Allow updates from devices before OpenZWave has finished initialising
+		</li>
+		<li><b><i class="icon-bookmark"></i> Logging:</b>
+		  Set the logging level for OpenZWave lib
+		  Please note that a Node-Red restart is required for OpenZWave to pick up any changes in the logging level.
+		</li>
+	</ul>
+  </script>
 
 <script type="text/x-red" data-help-name="zwave-in">
     <p><b>Input node for ZWave events.</b><br/>
@@ -104,7 +262,41 @@
 	<b>msg.payload</b> has this sub-element for requestAllConfigParams action:<br/>
 		<br/>&nbsp;&nbsp;<b>msg.payload.nodeId: (REQUIRED for all topics)</b> zwave node to send the command (eg. 2)
     </p>
+	<p>
+	<b>EXPERIMENTAL:</b> Any other topic command is send basically every available command down
+		 to OpenZWave, just name the function in the message topic
+		 and pass in the arguments as "payload.args" as an array:
+		 {"topic": "someOpenZWaveCommand", "payload": {"args": [1, 2, 3]}}
+		 If the command needs the HomeID as the 1st arg, use "payload.prependHomeId"
+	</p>
 </script>
+
+<script type="text/x-red" data-help-name="zwave-cmd">
+    <p>
+	<b>Function node for directly calling OpenZWave functions.</b><br/>
+    Directly call OpenZWave functions<br/>
+    <b>msg.topic</b> is the name of the function, if not set in the node settings.<br/>
+    <b>msg.payload.args</b> must be an array containing the function call arguments, in the correct order.<br/>
+	<b>msg.payload.prependHomeId</b> If the command needs the HomeID as the 1st arg, set this to <i>true</i>
+    </p>
+	<p>
+	The Node-Red message payload should contain an array of the command arguments **in the correct order**.<br/>
+	For example:
+
+  * to **add a new ZWave node** to your network, you need to prepend the ZWave Home ID to the `addNode()` management call as follows:
+
+  `{"topic": "addNode", "payload": {"prependHomeId": true}}`
+
+  * to **enable polling** for ZWave node #5 for the on-off command class (0x25 == decimal 37). Notice that the [EnablePoll() command](http://www.openzwave.com/dev/classOpenZWave_1_1Manager.html#a50d795cb20a0bea55ecfd4a02c9777f3) does **not** need a HomeId as an argument, hence we don't need to add `prependHomeId` to the message payload:
+
+  `{"topic": "enablePoll", "payload": {"args": [5, 37]}}`
+
+  * to get **a node's statistics** by using the `getNodeStatistics()` call:
+
+  `{"topic": "getNodeStatistics", "payload": {"args": [2]}}`
+</script>
+ 
+ 
 
 <script type="text/javascript">
     var ZWAVE_CLASSES = {
@@ -202,7 +394,9 @@
             name: {value: ""},
             port: {value: "/dev/ttyUSB0", required: true},
             driverattempts: {value: 3, required: true, validate: RED.validators.number()},
-            pollinterval: {value: 500, required: true, validate: RED.validators.number()},
+            pollinterval: {value: 10000, required: true, validate: RED.validators.number()},
+			allowunreadyupdates: {value: false, required:true},
+			logging: {value: 0, required: false},
         },
         label: function () {
             return ("openzwave@" + this.port);
@@ -450,7 +644,7 @@
         }
     });
     RED.nodes.registerType('zwave-in', {
-        category: 'input',
+        category: 'home automation',
         color: 'pink',
         defaults: {
             name: {value: ""},
@@ -460,11 +654,11 @@
         outputs: 1,
         icon: "zwave.png",
         label: function () {
-            return (this.name || "");
+            return (this.name || "zwave-in");
         }
     });
     RED.nodes.registerType('zwave-out', {
-        category: 'output',
+        category: 'home automation',
         color: 'pink',
         defaults: {
             name: {value: ""},
@@ -474,7 +668,20 @@
         outputs: 0,
         icon: "zwave.png",
         label: function () {
-            return (this.name || "");
+            return (this.name || "zwave-out");
         }
+    });
+    RED.nodes.registerType('zwave-cmd',{
+        category:'home automation',
+        color:  'pink',
+        defaults: {
+            name:       {value:""},
+            controller: {value:"", type:"zwave-controller"},
+			topic:		{value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "zwave.png",
+        label: function() { return (this.name || this.topic || "zwave-cmd"); }
     });
 </script>

@@ -2,8 +2,9 @@
 
  OpenZWave nodes for IBM's Node-Red
  https://github.com/ekarak/node-red-contrib-openzwave
- (c) 2014-2015, Elias Karakoulakis <elias.karakoulakis@gmail.com>
-
+ (c) 2014-2017, Elias Karakoulakis <elias.karakoulakis@gmail.com>
+ (c) 2017 Sebastian Barwe <sebastian.barwe@gmail.com>
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -18,6 +19,7 @@
 
  */
 
+
 var UUIDPREFIX = "_macaddr_";
 var HOMENAME = "_homename_";
 require('getmac').getMac(function (err, macAddress) {
@@ -25,18 +27,27 @@ require('getmac').getMac(function (err, macAddress) {
     UUIDPREFIX = macAddress.replace(/:/gi, '');
 });
 
-/* set this to true to get some incomprehensible Klingon text in your console */
-var debug = true;
-if (debug) console.log("booting up node-red-contrib-openzwave");
 
 module.exports = function (RED) {
-    var serialp = require("serialport");
-    var OpenZWave = require('openzwave-shared');
+    const serialp = require("serialport");
+	const util = require('util');
+	const path = require('path');
+	const fs = require('fs');
+	
+	var ozwsharedpath = path.dirname(path.dirname(require.resolve('openzwave-shared')));
+	var ozwsharedpackage = JSON.parse(fs.readFileSync(ozwsharedpath+"/package.json"));
+	var thispackage = JSON.parse(fs.readFileSync(__dirname+'/package.json'));
+	RED.log.info('openzwave-shared: ' + ozwsharedpackage.version);
+	RED.log.info('node-red-contrib-openzwave: ' + thispackage.version);
+	
+    const OpenZWave = require('openzwave-shared');
 
     var ozwConfig = {};
     var ozwDriver = null;
     var ozwConnected = false;
     var driverReadyStatus = false;
+	var allowunreadyupdates = false;
+	
     // array of all zwave nodes with internal hashmaps for their properties and their values
     var zwnodes = {};
     // Provide context.global access to node info.
@@ -52,7 +63,7 @@ module.exports = function (RED) {
     function zwsubscribe(nrNode, event, callback) {
         if (!(event in nrNodeSubscriptions))
             nrNodeSubscriptions[event] = {};
-        if (debug) console.log('subscribing %s(%s) to event %s', nrNode.type, nrNode.id, event);
+        RED.log.trace(util.format('subscribing %s(%s) to event %s', nrNode.type, nrNode.id, event));
         nrNodeSubscriptions[event][nrNode.id] = callback;
     }
 
@@ -60,7 +71,7 @@ module.exports = function (RED) {
     function zwunsubscribe(nrNode) {
         for (var event in nrNodeSubscriptions) {
             if (nrNodeSubscriptions.hasOwnProperty(event)) {
-                if (debug) console.log('unsubscribing %s(%s) from %s', nrNode.type, nrNode.id, event);
+                RED.log.trace(util.format('unsubscribing %s(%s) from %s', nrNode.type, nrNode.id, event));
                 delete nrNodeSubscriptions[event][nrNode.id];
             }
         }
@@ -71,7 +82,7 @@ module.exports = function (RED) {
      * ============================================================================
      **/
     function zwcallback(event, arghash) {
-        if (debug) console.log("zwcallback(event: %s, args: %j)", event, arghash);
+        RED.log.trace(util.format("zwcallback(event: %s, args: %j)", event, arghash));
         // Add uuid
         if (arghash.nodeid !== undefined && HOMENAME !== undefined)
             arghash.uuid = UUIDPREFIX + '-' +
@@ -84,7 +95,7 @@ module.exports = function (RED) {
             for (var nrnid in nrNodes) {
                 if (nrNodes.hasOwnProperty(nrnid)) {
                     var nrNode = RED.nodes.getNode(nrnid);
-                    if (debug) console.log("zwcallback => %j,  %s,  args %j", nrNode, event, arghash);
+                    RED.log.trace(util.format("zwcallback => %j,  %s,  args %j", nrNode, event, arghash));
                     nrNodes[nrnid].call(nrNode, event, arghash);
                     updateNodeRedStatus(nrNode);
                 }
@@ -93,9 +104,9 @@ module.exports = function (RED) {
     }
 
     // update the NR node's status indicator
-    function updateNodeRedStatus(nrNode) {
+    function updateNodeRedStatus(nrNode, options) {
         // update NR node status
-        nrNode.status({
+        nrNode.status(options || {
             fill: driverReadyStatus ? "green" : "red",
             text: driverReadyStatus ? "connected" : "disconnected",
             shape: "ring"
@@ -108,7 +119,7 @@ module.exports = function (RED) {
         var homeHex = '0x' + homeid.toString(16);
         HOMENAME = homeHex;
         ozwConfig.name = homeHex;
-        if (debug) console.log('scanning Zwave network with homeid %s...', homeHex);
+        RED.log.info(util.format('scanning Zwave network with homeid %s...', homeHex));
         zwcallback('driver ready', ozwConfig);
     }
 
@@ -160,12 +171,11 @@ module.exports = function (RED) {
     function valueChanged(nodeid, comclass, valueId) {
         // valueId: OpenZWave ValueID (struct) - not just a boolean
         var oldst;
-        if (zwnodes[nodeid].ready) {
+        if (zwnodes[nodeid].ready || allowunreadyupdates) {
             oldst = zwnodes[nodeid]['classes'][comclass][valueId.instance][valueId.index].value;
-            if (debug) {
-                console.log('node%d: changed: %d:%s:%s->%s', nodeid, comclass, valueId['label'], oldst, valueId['value']);
-                console.log('node%d: value=%s', nodeid, JSON.stringify(valueId));
-            }
+            RED.log.trace(util.format('node%d: changed: %d:%s:%s->%s', nodeid, comclass, valueId['label'], oldst, valueId['value']));
+            RED.log.trace(util.format('node%d: value=%s', nodeid, JSON.stringify(valueId)));
+            
             // tell NR only if the node is marked as ready
             zwcallback('value changed', {
                 "nodeid": nodeid, "cmdclass": comclass, "instance": valueId.instance, "cmdidx": valueId.index,
@@ -205,9 +215,10 @@ module.exports = function (RED) {
                 zwnodes[nodeid][attrname] = nodeinfo[attrname];
             }
         }
+		RED.log.info(util.format("node%d: node ready (%s %s)", nodeid, nodeinfo.manufacturer || "", nodeinfo.product || ""));
         zwnodes[nodeid].ready = true;
         //
-        for (comclass in zwnodes[nodeid]['classes']) {
+        for (var comclass in zwnodes[nodeid]['classes']) {
             switch (comclass) {
                 case 0x25: // COMMAND_CLASS_SWITCH_BINARY
                 case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
@@ -219,11 +230,10 @@ module.exports = function (RED) {
             }
 
             var values = zwnodes[nodeid]['classes'][comclass];
-            if (debug) {
-                console.log('node%d: class %d', nodeid, comclass);
-                for (idx in values)
-                    console.log('node%d:   %s=%s', nodeid, values[idx]['label'], values[idx]['value']);
-            }
+            RED.log.trace(util.format('node%d: class %d', nodeid, comclass));
+            for (var idx in values)
+                RED.log.trace(util.format('node%d:   %s=%s', nodeid, values[idx]['label'], values[idx]['value']));
+            
         }
         //
         zwcallback('node ready', {nodeid: nodeid, nodeinfo: nodeinfo});
@@ -239,28 +249,35 @@ module.exports = function (RED) {
         zwcallback('node available', {nodeid: nodeid, nodeinfo: nodeinfo});
     }
 
-    function nodeEvent(nodeid, evtcode, valueId, help) {
+    function nodeEvent(nodeid, evt, help) {
+		RED.log.trace(util.format('node%d: %s', nodeid, help));
         zwcallback('node event', {
-            "nodeid": nodeid, "event": evtcode,
-            "cmdclass": valueId.comclass, "cmdidx": valueId.index, "instance": valueId.instance,
-            "msg": msg
+            "nodeid": nodeid, 
+			"event": evt, 
+			"help": help            
         });
     }
 
     function notification(nodeid, notif, help) {
-        if (debug) console.log('node%d: %s', nodeid, help);
+        RED.log.trace(util.format('node%d: %s', nodeid, help));
         zwcallback('notification', {nodeid: nodeid, notification: notif, help: help});
     }
 
     function scanComplete() {
-        if (debug) console.log('ZWave network scan complete.');
+        RED.log.info('ZWave network scan complete.');
         zwcallback('scan complete', {});
     }
 
     function controllerCommand(nodeid, state, errcode, help) {
-        if (debug) console.log('ZWave controller command feedback received');
+        RED.log.trace('ZWave controller command feedback received');
         zwcallback('controller command', {nodeid: nodeid, state: state, errcode: errcode, help: help});
     }
+	
+	function sceneEvent(nodeid, sceneid) {
+		RED.log.trace(util.format('node%d: scende event %d', nodeid, sceneid));
+		zwcallback('scene event', {
+			"nodeid": nodeid, "sceneid": sceneid});
+ 	}
 
     // list of events emitted by OpenZWave and redirected to Node flows by the mapped function
     var ozwEvents = {
@@ -277,39 +294,59 @@ module.exports = function (RED) {
         'value removed': valueRemoved,
         'notification': notification,
         'scan complete': scanComplete,
-        'controller command': controllerCommand
+        'controller command': controllerCommand,
+		'scene event': sceneEvent
     }
 
     // ==========================
-    function ZWaveController(n) {
-        // ==========================
-        RED.nodes.createNode(this, n);
-        this.name = n.port;
-        this.port = n.port;
-        this.driverattempts = n.driverattempts;
-        this.pollinterval = n.pollinterval;
+    function ZWaveController(config) {
+    // ==========================
+        RED.nodes.createNode(this, config);
+        this.name = config.port;
+        this.port = config.port;
+        this.driverattempts = config.driverattempts || 3;
+        this.pollinterval = config.pollinterval || 10000;
+		this.allowunreadyupdates = config.allowunreadyupdates;
+		this.logging = config.logging || 0;
         var node = this;
 
         // initialize OpenZWave upon boot or fetch it from the global reference
         // (used across Node-Red deployments which recreate all the nodes)
         // so we only get to initialise one single OZW driver (a lengthy process)
+		// see options.xml in the node's directory for basic options.
+		// these options are overrided by the following initialization options
+		// see https://github.com/OpenZWave/open-zwave/wiki/Config-Options for a description of the available parmeters.
         if (!ozwDriver) {
             ozwDriver = new OpenZWave({
-                Logging: debug,
-                ConsoleOutput: debug,
-                QueueLogLevel: 6
+				UserPath: RED.settings.userDir,		// save ozw data in nodered user dir
+				//ConfigPath: RED.settings.userDir,	 // path must containt the zwave configuration library from ozw
+				LogFileName: "ozw.log",				// TODO: append homeid to filename 
+				Interface: node.port,				// the serial port to use
+	            Logging: true,  					// enable logging to OZW_Log.txt
+                ConsoleOutput: true, 				// copy logging to the console
+				SaveConfig: false,      				// write an XML network layout
+				SaveConfiguration: true,
+				DriverAttempts: node.driverattempts,// try this many times before giving up
+				PollInterval: node.pollinterval,    // interval between polls in milliseconds
+				SuppressRefresh: false,    			// use refreshes to update alive timestamp
+	            QueueLogLevel: node.logging,
+				NotifyTransactions: true,			// Notifications when transaction complete is reported.
+				
+				//NetworkKey: "0xd2,0x58,0x85,0x11,0xa2,0x50,0xbc,0xd9,0xf4,0xa5,0x85,0x48,0x3f,0x9f,0xf8,0x06"
             });
+				
+			/* =============== OpenZWave events ================== */
+			Object.keys(ozwEvents).forEach(function (evt) {
+				RED.log.trace(node.name + ' addListener ' + evt);
+				ozwDriver.on(evt, ozwEvents[evt]);
+			});
         }
 
-        /* =============== OpenZWave events ================== */
-        Object.keys(ozwEvents).forEach(function (evt) {
-            if (debug) console.log(node.name + ' addListener ' + evt);
-            ozwDriver.on(evt, ozwEvents[evt]);
-        })
+
 
         /* =============== Node-Red events ================== */
         this.on("close", function () {
-            if (debug) console.log('zwave-controller: close');
+            RED.log.trace('zwave-controller: close');
             // controller should also unbind from the C++ addon
             if (ozwDriver) {
                 ozwDriver.removeAllListeners()
@@ -330,17 +367,36 @@ module.exports = function (RED) {
 
         });
 
+		zwsubscribe(node, 'scan complete', function(event, data) {
+ 			ozwDriver.setPollInterval(node.pollinterval);
+ 			allowunreadyupdates = node.allowunreadyupdates;
+ 		});
+ 
         zwsubscribe(node, 'driver failed', function (event, data) {
-            console.log('failed to start ZWave driver, is there a ZWave stick attached to %s ?', n.port);
+            RED.log.error(util.format('failed to start ZWave driver, is there a ZWave stick attached to %s ?', node.port));
         });
 
         /* time to connect */
         if (!ozwConnected) {
-            if (debug) console.log('ZWave Driver: connecting to %s', n.port);
-            ozwDriver.connect(n.port);
+            RED.log.trace(util.format('ZWave Driver: connecting to %s', config.port));
+            ozwDriver.connect(config.port);
             ozwConnected = true;
+			
+			function exitHandler(options, err) {
+				if (ozwDriver && ozwConnected) {
+					RED.log.info('disconnecting ZWave driver on '+node.port);
+					ozwDriver.disconnect(node.port);
+				}
+			
+				if (options.cleanup) RED.log.trace('clean shutdown');
+				if (err) RED.log.trace(util.format("%j", err.stack));
+			}
+			//do something when app is closing
+			process.on('exit', exitHandler.bind(null,{cleanup:true}));
         }
-    }
+		
+		
+	}
 
     //
     RED.nodes.registerType("zwave-controller", ZWaveController);
@@ -356,7 +412,7 @@ module.exports = function (RED) {
         var zwaveController = RED.nodes.getNode(config.controller);
 
         if (!zwaveController) {
-            node.err('no ZWave controller class defined!');
+            node.error('no ZWave controller class defined!');
             return;
         }
         /* =============== Node-Red events ================== */
@@ -365,7 +421,7 @@ module.exports = function (RED) {
             node.status({fill: "red", shape: "ring", text: "disconnected"});
             // remove all event subscriptions for this node
             zwunsubscribe(this);
-            if (debug) console.log('zwave-in: close');
+            node.info('zwave-in: close');
         });
         this.on("error", function () {
             // what? there are no errors. there never were.
@@ -377,7 +433,7 @@ module.exports = function (RED) {
             zwsubscribe(node, key, function (event, data) {
                 var msg = {'topic': 'zwave: ' + event};
                 if (data) msg.payload = data;
-                if (debug) console.log('===> ZWAVE-IN injecting: %j', msg);
+                RED.log.trace(util.format('===> ZWAVE-IN injecting: %j', msg));
                 node.send(msg);
             });
         });
@@ -394,19 +450,21 @@ module.exports = function (RED) {
         // =========================
         RED.nodes.createNode(this, config);
         this.name = config.name;
+		this.topic = config.topic || null;
+		
         //
         var node = this;
         var zwaveController = RED.nodes.getNode(config.controller);
 
         if (!zwaveController) {
-            node.err('no ZWave controller class defined!');
+            node.error('no ZWave controller class defined!');
             return;
         }
 
         /* =============== Node-Red events ================== */
         //
         this.on("input", function (msg) {
-            if (debug) console.log("ZWaveOut#input: %j", msg);
+            RED.log.trace(util.format("ZWaveOut#input: %j", msg));
             var payload;
             try {
                 payload = (typeof(msg.payload) === "string") ?
@@ -432,7 +490,7 @@ module.exports = function (RED) {
 
                 // setValue: for everything else
                 case /setValue/.test(msg.topic):
-                    if (debug) console.log("ZWaveOut.setValue payload: %j", payload);
+                    RED.log.trace(util.format("ZWaveOut.setValue payload: %j", payload));
                     ozwDriver.setValue(
                         payload.nodeid,
                         (payload.cmdclass || 37),// default cmdclass: on-off
@@ -443,7 +501,7 @@ module.exports = function (RED) {
                     break;
 
                 case /setConfigParam/.test(msg.topic):
-                    if (debug) console.log("ZWaveOut.setConfigParam payload: %j", payload);
+                    RED.log.trace(util.format("ZWaveOut.setConfigParam payload: %j", payload));
                     ozwDriver.setConfigParam(
                         payload.nodeid,
                         payload.paramId,
@@ -451,36 +509,61 @@ module.exports = function (RED) {
                     );
                     break;
                 case /requestConfigParam/.test(msg.topic):
-                    if (debug) console.log("ZWaveOut.requestConfigParam payload: %j", payload);
+                    RED.log.trace(util.format("ZWaveOut.requestConfigParam payload: %j", payload));
                     ozwDriver.requestConfigParam(
                         payload.nodeid,
                         payload.paramId
                     );
                     break;
                 case /requestAllConfigParams/.test(msg.topic):
-                    if (debug) console.log("ZWaveOut.requestAllConfigParams payload: %j", payload);
+                    RED.log.trace(util.format("ZWaveOut.requestAllConfigParams payload: %j", payload));
                     ozwDriver.requestAllConfigParams(payload.nodeid);
                     break;
                 case /refreshNodeInfo/.test(msg.topic):
-                    if (debug) console.log("ZWaveOut.refreshNodeInfo payload: %j", payload);
+                    RED.log.trace(util.format("ZWaveOut.refreshNodeInfo payload: %j", payload));
                     ozwDriver.refreshNodeInfo(payload.nodeid);
                     break;
 
-                /* EXPERIMENTAL: send basically every available command down
-                 * to OpenZWave, just name the function in the message topic
-                 * and pass in the payload the function's args as an array:
-                 * {"topic": "someOpenZWaveCommand", "payload": [1, 2, 3]}
-                 * */
+				/* EXPERIMENTAL: send basically every available command down
+				 * to OpenZWave, just name the function in the message topic
+				 * and pass in the arguments as "payload.args" as an array:
+				 * {"topic": "someOpenZWaveCommand", "payload": {"args": [1, 2, 3]}}
+				 * If the command needs the HomeID as the 1st arg, use "payload.prependHomeId"
+				 * */
+				 //TODO: move this to special zwave-cmd-node code
                 default:
-                    if (/*ozwDriver.hasOwnProperty(msg.topic) &&*/
-                    typeof ozwDriver[msg.topic] === 'function' &&
-                    payload.constructor.name === 'Array'
-                    ) {
-                        console.log('attempting direct call to OpenZWave API: %s(%s)', msg.topic, payload);
+				
+					var topic;
+					if (msg.topic !== undefined && msg.topic !== "") {
+						topic = msg.topic;
+					} else {
+						topic = node.topic;
+					}
+					if (topic in ozwDriver &&
+						typeof ozwDriver[topic] === 'function' &&
+						payload
+						){
+							RED.log.trace(util.format('attempting direct call to OpenZWave API: %s(%s)', topic, payload));
                         try {
-                            ozwDriver[msg.topic](payload.args);
+                            var args = payload.args || [];
+            				if (payload.prependHomeId) 
+								args.unshift(ozwConfig.homeid);
+							var retval = ozwDriver[topic].apply(ozwDriver, args);
+
+							
+ 							if ((typeof result != 'undefined') && !retval) {
+ 								RED.log.trace('Got return value, sending as payload');
+ 							} else {
+ 								RED.log.trace('No return value but call successful, sending empty array');
+ 							}
+							//TODO: move below so that error case is handled
+							msg.topic = topic;
+							msg.payload.args = args;
+							msg.payload.result = retval || [];
+							//TODO: this is only for the cmdnode
+ 							node.send(msg);
                         } catch (err) {
-                            node.warn('direct OpenZWave call to ' + msg.topic + ' failed: ' + err);
+                            node.warn('direct OpenZWave call to ' + topic + ' failed: ' + err);
                         }
                     }
                     ;
@@ -497,8 +580,8 @@ module.exports = function (RED) {
         });
 
         this.on("error", function () {
-            // there are. no. russians. in afghanistan.
             node.status({fill: "yellow", shape: "ring", text: "error"});
+			node.log('zwave-out: error');
         });
 
         /* =============== OpenZWave events ================== */
@@ -512,9 +595,15 @@ module.exports = function (RED) {
         updateNodeRedStatus(node);
     }
 
+
+
     //
     RED.nodes.registerType("zwave-out", ZWaveOut);
-    //
+	
+	//TODO: create ZWaveCmd instead of ZWaveOut
+	RED.nodes.registerType("zwave-cmd", ZWaveOut);
+	
+    // create API endpoints for configuration node
     RED.httpAdmin.post("/openzwave/:id/:command", RED.auth.needsPermission("openzwave.write"), function (req, res) {
         var node = RED.nodes.getNode(req.params.id);
         try {
@@ -525,24 +614,28 @@ module.exports = function (RED) {
                         ozwDriver.addNode(false);
                     else
                         ozwDriver.beginControllerCommand('AddDevice', false);
-                    res.send(200);
+                    res.sendStatus(200);
                     break;
                 case 'remove_spec_node':
-                    res.send(200);
+                    res.sendStatus(200);
                     break;
                 case 'remove':
                 case 'delete':
-                    ozwDriver.beginControllerCommand('RemoveDevice', true);
-                    res.send(200);
+					ozwDriver.removeNode();
+					// ozwDriver.beginControllerCommand('RemoveDevice', true);
+                    res.sendStatus(200);
                     break;
                 case 'remove_dead':
                 case 'delete_failed':
                     ozwDriver.beginControllerCommand('RemoveFailedNode', true);
-                    res.send(200);
+                    res.sendStatus(200);
                     break;
                 case 'cancel':
                     ozwDriver.cancelControllerCommand(true);
-                    res.send(200);
+					// TODO: handle asynchronisytoy here
+					 if (ozwDriver.addNode)
+                        ozwDriver.addNode(true);
+                    res.sendStatus(200);
                     break;
                 case 'list_nodes':
                     res.status(200).json(zwnodes);
@@ -552,18 +645,18 @@ module.exports = function (RED) {
                     break;
                 case 'soft_reset':
                     ozwDriver.softReset();
-                    res.send(200);
+                    res.sendStatus(200);
                     break;
                 case 'heal_network':
                     ozwDriver.healNetwork();
-                    res.send(200);
+                    res.sendStatus(200);
                     break;
                 default:
-                    res.send(404);
+                    res.sendStatus(404);
             }
         } catch (err) {
-            res.send(500);
-            console.log(err);
+            res.sendStatus(500);
+            RED.log.error(err);
             node.error(RED._("openzwave.failed", {error: err.toString()}));
         }
     });

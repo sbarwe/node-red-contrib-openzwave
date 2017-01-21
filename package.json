@@ -1,15 +1,19 @@
 {
   "name": "node-red-contrib-openzwave",
-  "version": "1.2.0",
+  "version": "1.2.7",
   "description": "ZWave for node-red through OpenZWave, the open source ZWave library",
   "dependencies": {
-    "openzwave-shared": "1.1.2",
+    "openzwave-shared": "1.2.7",
     "getmac": ">= 1.0.0",
-    "serialport": "1.7.*"
+    "serialport": "4.0.*"
+  },
+  "engines": {
+    "node": ">=4",
+	"npm": "=2.*"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/ekarak/node-red-contrib-openzwave.git#master"
+    "url": "https://github.com/OpenZWave/node-red-contrib-openzwave.git#master"
   },
   "author": "Elias Karakoulakis <elias.karakoulakis@gmail.com>",
   "keywords": [
@@ -23,7 +27,7 @@
     }
   },
   "bugs": {
-    "url": "https://github.com/ekarak/node-red-contrib-openzwave.git#master/issues"
+    "url": "https://github.com/OpenZWave/node-red-contrib-openzwave.git#master/issues"
   },
   "main": "10-zwave.js",
   "scripts": {
